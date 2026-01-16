@@ -35,7 +35,7 @@ export const AboutSettings = ({ onBack }: { onBack: () => void }) => {
         <motion.div
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
-          className="w-20 h-20 mx-auto mb-4 rounded-2xl overflow-hidden flex items-center justify-center bg-transparent"
+          className="w-20 h-20 mx-auto mb-4 flex items-center justify-center"
         >
           <img 
             src="/lifOSlogo.png" 

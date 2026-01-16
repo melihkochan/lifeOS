@@ -97,7 +97,7 @@ const Auth = () => {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', delay: 0.2 }}
-            className="w-20 h-20 mx-auto mb-4 rounded-2xl overflow-hidden flex items-center justify-center shadow-lg bg-transparent"
+            className="w-20 h-20 mx-auto mb-4 flex items-center justify-center"
           >
             <img 
               src="/lifOSlogo.png" 

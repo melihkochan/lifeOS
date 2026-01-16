@@ -81,8 +81,19 @@ export const SettingsView = () => {
       className="space-y-5"
     >
       <div>
-        <h1 className="text-2xl font-bold mb-1">{t.settings}</h1>
-        <p className="text-muted-foreground text-sm">{t.managePrefs}</p>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-12 h-12 flex items-center justify-center">
+            <img 
+              src="/lifOSlogo.png" 
+              alt="LifeOS Logo" 
+              className="w-full h-full object-contain"
+            />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold mb-1">{t.settings}</h1>
+            <p className="text-muted-foreground text-sm">{t.managePrefs}</p>
+          </div>
+        </div>
       </div>
 
       {/* Profile Card with Balance */}
