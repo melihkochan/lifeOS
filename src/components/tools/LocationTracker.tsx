@@ -52,7 +52,6 @@ export const LocationTracker = () => {
     navigator.geolocation.getCurrentPosition(
       updateLocation,
       (error) => {
-        console.error(error);
         toast.error(t.locationError);
         setLoading(false);
       },
@@ -69,7 +68,6 @@ export const LocationTracker = () => {
       const id = navigator.geolocation.watchPosition(
         updateLocation,
         (error) => {
-          console.error(error);
           toast.error(t.locationError);
         },
         { enableHighAccuracy: true }

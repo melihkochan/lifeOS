@@ -55,8 +55,8 @@ export const useWeather = (language: 'tr' | 'en') => {
           });
         },
         (err) => {
-          console.error('Geolocation error:', err);
-          // Default to Istanbul if location denied
+          // Silently fallback to Istanbul if location denied
+          // This is normal behavior when user denies location permission
           setLocation({ latitude: 41.0082, longitude: 28.9784 });
         }
       );

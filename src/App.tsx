@@ -81,8 +81,6 @@ const App = () => {
     if (!url || !key) {
       console.error('❌ Supabase bağlantı bilgileri eksik!');
       console.error('Lütfen .env dosyasını kontrol edin.');
-    } else {
-      console.log('✅ Supabase bağlantı bilgileri yüklendi');
     }
   }, []);
 
