@@ -35,3 +35,13 @@ Thumbs.db
 
 # Build files
 *.tsbuildinfo
+
+# Capacitor
+/android
+/ios
+/.capacitor
+
+# Keystore (GÜVENLİK - ASLA COMMIT ETME!)
+*.keystore
+keystore.properties
+*.jks

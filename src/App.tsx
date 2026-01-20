@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import { Loader2, AlertCircle } from "lucide-react";
 import { useEffect } from "react";
 
@@ -68,6 +69,8 @@ const AppRoutes = () => (
         </AuthRoute>
       } 
     />
+    <Route path="/privacy" element={<PrivacyPolicy />} />
+    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
