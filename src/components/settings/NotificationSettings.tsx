@@ -1,10 +1,22 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { Bell, BellOff, Clock, Calendar, Wallet, Volume2 } from 'lucide-react';
+import { Bell, BellOff, Clock, Calendar, Wallet, Volume2, Settings } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAppStore } from '@/stores/useAppStore';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
 import { toast } from 'sonner';
+
+// Try to import Capacitor App (for mobile)
+let CapacitorApp: any = null;
+let Capacitor: any = null;
+try {
+  const capacitorCore = require('@capacitor/core');
+  Capacitor = capacitorCore.Capacitor;
+  const appModule = require('@capacitor/app');
+  CapacitorApp = appModule.App;
+} catch (e) {
+  // Not in mobile environment
+}
 
 interface NotificationPrefs {
   taskReminders: boolean;
@@ -146,6 +158,62 @@ export const NotificationSettings = ({ onBack }: { onBack: () => void }) => {
           )}
         </div>
       </div>
+
+      {/* Mobile Optimizations - Arka Plan Verisi */}
+      {Capacitor && Capacitor.getPlatform() === 'android' && (
+        <div className="widget border border-info/30">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 flex-1">
+              <Settings className="w-5 h-5 text-info mt-0.5" />
+              <div className="flex-1">
+                <p className="font-medium text-sm">
+                  {language === 'tr' ? 'Arka Plan Bildirimleri' : 'Background Notifications'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {language === 'tr' 
+                    ? 'Uygulama kapalıyken bildirimlerin gelmesi için pil optimizasyonunu kapatmanız gerekebilir.'
+                    : 'You may need to disable battery optimization for notifications when the app is closed.'}
+                </p>
+              </div>
+            </div>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={async () => {
+                try {
+                  if (CapacitorApp) {
+                    // Open Android app settings directly
+                    await CapacitorApp.openUrl({ url: 'app-settings:' });
+                    toast.success(
+                      language === 'tr' 
+                        ? 'Ayarlar açılıyor... Pil > Optimizasyon yok seçeneğini kapatın'
+                        : 'Opening settings... Turn off Battery optimization',
+                      { duration: 5000 }
+                    );
+                  } else {
+                    throw new Error('Capacitor App not available');
+                  }
+                } catch (error) {
+                  // Fallback: Show detailed instructions
+                  toast.info(
+                    language === 'tr'
+                      ? 'Ayarlar > Uygulamalar > LifeOS > Pil > Optimizasyon yok seçeneğini kapatın'
+                      : 'Settings > Apps > LifeOS > Battery > Turn off optimization',
+                    { 
+                      duration: 10000,
+                      description: language === 'tr' 
+                        ? 'Bu ayarı kapatmak bildirimlerin arka planda çalışmasını sağlar'
+                        : 'Disabling this allows notifications to work in background'
+                    }
+                  );
+                }
+              }}
+              className="px-4 py-2 bg-info/10 text-info rounded-lg text-sm whitespace-nowrap hover:bg-info/20 transition-colors"
+            >
+              {language === 'tr' ? 'Ayarlara Git' : 'Open Settings'}
+            </motion.button>
+          </div>
+        </div>
+      )}
 
       {/* Notification Types */}
       <div className="space-y-2">

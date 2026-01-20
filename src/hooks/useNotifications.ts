@@ -4,10 +4,35 @@ import { toast } from 'sonner';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, subWeeks, subMonths } from 'date-fns';
 import { tr, enUS } from 'date-fns/locale';
 
+// Try to import Capacitor LocalNotifications (may not be available)
+let LocalNotifications: any = null;
+try {
+  const module = require('@capacitor/local-notifications');
+  LocalNotifications = module.LocalNotifications;
+} catch (e) {
+  // Plugin not installed, will use browser notifications
+  console.log('LocalNotifications plugin not available, using browser notifications');
+}
+
 export const useNotifications = () => {
   const { notes, markNoteNotified, language } = useAppStore();
 
   const requestPermission = useCallback(async () => {
+    // Try native notifications first (mobile)
+    if (LocalNotifications) {
+      try {
+        const permission = await LocalNotifications.checkPermissions();
+        if (permission.display === 'prompt') {
+          await LocalNotifications.requestPermissions();
+        }
+        return;
+      } catch (error) {
+        console.error('Native notification permission error:', error);
+        // Fall through to browser notifications
+      }
+    }
+
+    // Fallback to browser notifications (web)
     if (!('Notification' in window)) {
       return;
     }
@@ -24,18 +49,81 @@ export const useNotifications = () => {
     }
   }, []);
 
-  const sendNotification = useCallback((title: string, body: string) => {
+  const sendNotification = useCallback(async (title: string, body: string) => {
     // Always show toast
     toast.info(title, { description: body, duration: 10000 });
 
-    // Try browser notification
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, {
-        body,
-        icon: '/lifOSlogo.png',
-        badge: '/lifOSlogo.png',
-        tag: 'lifeOS-reminder',
-      });
+    // Try native notifications first (mobile - if plugin available)
+    if (LocalNotifications) {
+      try {
+        const permission = await LocalNotifications.checkPermissions();
+        if (permission.display === 'granted') {
+          await LocalNotifications.schedule({
+            notifications: [
+              {
+                title,
+                body,
+                id: Date.now(),
+                sound: 'default',
+                attachments: undefined,
+                actionTypeId: '',
+                extra: null,
+              },
+            ],
+          });
+          return;
+        } else if (permission.display === 'prompt') {
+          const result = await LocalNotifications.requestPermissions();
+          if (result.display === 'granted') {
+            await LocalNotifications.schedule({
+              notifications: [
+                {
+                  title,
+                  body,
+                  id: Date.now(),
+                  sound: 'default',
+                },
+              ],
+            });
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Native notification error:', error);
+        // Fall through to browser notifications
+      }
+    }
+
+    // Fallback to browser notification (web and mobile fallback)
+    if ('Notification' in window) {
+      // Request permission if not already granted
+      if (Notification.permission === 'default') {
+        try {
+          await Notification.requestPermission();
+        } catch (error) {
+          console.error('Error requesting notification permission:', error);
+        }
+      }
+
+      if (Notification.permission === 'granted') {
+        try {
+          const notification = new Notification(title, {
+            body,
+            icon: '/lifOSlogo.png',
+            badge: '/lifOSlogo.png',
+            tag: 'lifeOS-reminder',
+            requireInteraction: false,
+            silent: false,
+          });
+
+          // Auto close after 5 seconds
+          setTimeout(() => {
+            notification.close();
+          }, 5000);
+        } catch (error) {
+          console.error('Error creating notification:', error);
+        }
+      }
     }
   }, []);
 
@@ -295,6 +383,7 @@ export const useNotifications = () => {
   }, [language, playAlarm, sendNotification]);
 
   useEffect(() => {
+    // Request permission on mount
     requestPermission();
 
     const checkReminders = () => {
@@ -350,11 +439,22 @@ export const useNotifications = () => {
       checkMonthlySummary();
     };
 
-    // Check every 10 seconds
+    // Check every 10 seconds (more frequent for mobile)
     const interval = setInterval(checkReminders, 10000);
     checkReminders(); // Initial check
 
-    return () => clearInterval(interval);
+    // Also check when app becomes visible (for mobile)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        checkReminders();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [notes, markNoteNotified, language, sendNotification, playAlarm, requestPermission, checkTaskReminders, checkBudgetAlerts, checkWeeklySummary, checkMonthlySummary]);
 
   return { requestPermission };
